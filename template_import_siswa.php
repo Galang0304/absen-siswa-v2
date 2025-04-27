@@ -82,9 +82,12 @@ try {
 
     // Tambahkan contoh data
     $contohData = [
-        ['00012023', '3169255540', 'Ahmad Setiawan', 'L', '1'],
-        ['00022023', '3169255541', 'Siti Nurhaliza', 'P', '1'],
-        ['00032023', '3169255542', 'Budi Santoso', 'L', '2']
+        ['00012023', '3169255540', 'Ahmad Setiawan', 'L', '4'],  // Kelas 1
+        ['00022023', '3169255541', 'Siti Nurhaliza', 'P', '5'],  // Kelas 4
+        ['00032023', '3169255542', 'Budi Santoso', 'L', '6'],    // Kelas 3
+        ['00042023', '3169255543', 'Rina Melati', 'P', '7'],     // Kelas 5
+        ['00052023', '3169255544', 'Muhammad Rizki', 'L', '8'],  // Kelas 2
+        ['00062023', '3169255545', 'Putri Ayu', 'P', '9']        // Kelas 6
     ];
 
     $row = 8;
@@ -113,14 +116,49 @@ try {
             ],
         ],
     ];
-    $sheet->getStyle('A8:E10')->applyFromArray($contohStyle);
+    $sheet->getStyle('A8:E13')->applyFromArray($contohStyle);
 
     // Tambahkan catatan contoh
-    $sheet->setCellValue('A11', 'Catatan: Data di atas hanya contoh. Hapus atau timpa dengan data yang sebenarnya.');
-    $sheet->mergeCells('A11:E11');
-    $sheet->getStyle('A11')->getFont()->setItalic(true);
-    $sheet->getStyle('A11')->getFont()->setSize(10);
-    $sheet->getStyle('A11')->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('808080'));
+    $sheet->setCellValue('A14', 'Catatan: Data di atas hanya contoh. Hapus atau timpa dengan data yang sebenarnya.');
+    $sheet->mergeCells('A14:E14');
+    $sheet->getStyle('A14')->getFont()->setItalic(true);
+    $sheet->getStyle('A14')->getFont()->setSize(10);
+    $sheet->getStyle('A14')->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('808080'));
+
+    // Tambahkan informasi ID Kelas
+    $sheet->setCellValue('G7', 'REFERENSI ID KELAS:');
+    $sheet->getStyle('G7')->getFont()->setBold(true);
+    
+    $kelasInfo = [
+        ['4', 'Kelas 1'],
+        ['5', 'Kelas 4'],
+        ['6', 'Kelas 3'],
+        ['7', 'Kelas 5'],
+        ['8', 'Kelas 2'],
+        ['9', 'Kelas 6']
+    ];
+    
+    $row = 8;
+    foreach ($kelasInfo as $info) {
+        $sheet->setCellValue('G' . $row, $info[0]);
+        $sheet->setCellValue('H' . $row, $info[1]);
+        $row++;
+    }
+    
+    // Style untuk informasi kelas
+    $sheet->getStyle('G7:H' . ($row-1))->applyFromArray([
+        'borders' => [
+            'allBorders' => [
+                'borderStyle' => Border::BORDER_THIN,
+            ],
+        ],
+    ]);
+    $sheet->getStyle('G8:H' . ($row-1))->getFill()
+        ->setFillType(Fill::FILL_SOLID)
+        ->setStartColor(new \PhpOffice\PhpSpreadsheet\Style\Color('F8F9FA'));
+    
+    $sheet->getColumnDimension('G')->setWidth(15);
+    $sheet->getColumnDimension('H')->setWidth(20);
 
     // Tambahkan validasi untuk kolom Jenis Kelamin
     $validation = $sheet->getCell('D8')->getDataValidation();
