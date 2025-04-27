@@ -84,7 +84,7 @@ if(!isset($_SESSION['user_id']) && $current_page != 'login.php') {
 
 <!-- Mobile Header -->
 <div class="md:hidden fixed top-0 left-0 right-0 bg-orange-600 shadow-lg z-50">
-    <div class="flex items-center justify-center px-4 py-2">
+    <div class="flex items-center justify-between px-4 py-3">
         <div class="flex items-center space-x-3">
             <img src="assets/images/logo-sekolah.png" alt="Logo Sekolah" class="w-10 h-10">
             <div>
@@ -92,6 +92,14 @@ if(!isset($_SESSION['user_id']) && $current_page != 'login.php') {
                 <div class="text-orange-100 text-xs">BONTOMACINNA</div>
             </div>
         </div>
+        <?php if(isset($_SESSION['user_id'])): ?>
+            <div class="flex items-center space-x-3">
+                <span class="text-white text-sm"><?= htmlspecialchars($_SESSION['nama']) ?></span>
+                <a href="logout.php" class="bg-white text-orange-600 px-3 py-1 rounded-lg text-sm hover:bg-orange-50 transition duration-200">
+                    <i class="fas fa-sign-out-alt"></i> Keluar
+                </a>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -153,18 +161,7 @@ if(!isset($_SESSION['user_id']) && $current_page != 'login.php') {
             <i class="fas fa-user-graduate w-6"></i>
             <span class="ml-3">Siswa</span>
         </a>
-
-        <div class="border-t border-gray-200 my-2"></div>
         <?php endif; ?>
-        
-        <div class="px-4 py-2">
-            <p class="text-sm font-medium text-gray-700"><?= htmlspecialchars($_SESSION['nama']) ?></p>
-        </div>
-        
-        <a href="logout.php" class="flex items-center px-4 py-2 text-orange-600 hover:bg-orange-50 rounded-lg">
-            <i class="fas fa-sign-out-alt w-6"></i>
-            <span class="ml-3">Keluar</span>
-        </a>
     </div>
 </div>
 

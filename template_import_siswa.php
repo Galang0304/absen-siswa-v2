@@ -141,47 +141,118 @@ try {
         $validation->setShowDropDown(true);
     }
 
-    // Ambil daftar kelas untuk informasi
-    $stmt = $pdo->query("SELECT id, nama_kelas FROM kelas ORDER BY nama_kelas");
-    $kelas_list = $stmt->fetchAll();
-
     // Tambahkan sheet informasi kelas
     $infoSheet = $spreadsheet->createSheet();
     $infoSheet->setTitle('Informasi Kelas');
     
     // Tambahkan judul di sheet informasi
-    $infoSheet->setCellValue('A1', 'DAFTAR ID KELAS');
-    $infoSheet->mergeCells('A1:B1');
-    $infoSheet->getStyle('A1:B1')->applyFromArray([
+    $infoSheet->setCellValue('A1', 'INFORMASI ID KELAS');
+    $infoSheet->mergeCells('A1:C1');
+    $infoSheet->getStyle('A1:C1')->applyFromArray([
         'font' => ['bold' => true, 'size' => 14],
+        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+        'fill' => [
+            'fillType' => Fill::FILL_SOLID,
+            'startColor' => ['rgb' => 'FFE699'],
+        ],
+    ]);
+
+    // Tambahkan catatan penting
+    $infoSheet->setCellValue('A2', 'PENTING: Gunakan ID Kelas yang sesuai saat mengisi data siswa!');
+    $infoSheet->mergeCells('A2:C2');
+    $infoSheet->getStyle('A2')->applyFromArray([
+        'font' => ['bold' => true, 'color' => ['rgb' => 'FF0000']],
         'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
     ]);
     
     // Header untuk informasi kelas
-    $infoSheet->setCellValue('A2', 'ID Kelas');
-    $infoSheet->setCellValue('B2', 'Nama Kelas');
+    $infoSheet->setCellValue('A4', 'ID Kelas');
+    $infoSheet->setCellValue('B4', 'Nama Kelas');
+    $infoSheet->setCellValue('C4', 'Wali Kelas');
+
+    // Ambil data kelas beserta wali kelasnya
+    $stmt = $pdo->query("
+        SELECT k.id, k.nama_kelas, COALESCE(g.nama, '-') as wali_kelas 
+        FROM kelas k 
+        LEFT JOIN guru g ON k.guru_id = g.id 
+        ORDER BY k.nama_kelas
+    ");
+    $kelas_list = $stmt->fetchAll();
 
     // Style untuk header informasi
-    $infoSheet->getStyle('A2:B2')->applyFromArray($headerStyle);
-    $infoSheet->getColumnDimension('A')->setAutoSize(true);
-    $infoSheet->getColumnDimension('B')->setAutoSize(true);
-
-    // Isi data kelas
-    $row = 3;
-    foreach ($kelas_list as $kelas) {
-        $infoSheet->setCellValue('A' . $row, $kelas['id']);
-        $infoSheet->setCellValue('B' . $row, $kelas['nama_kelas']);
-        $row++;
-    }
-
-    // Style untuk data kelas
-    $infoSheet->getStyle('A3:B' . ($row-1))->applyFromArray([
+    $headerStyle = [
+        'font' => [
+            'bold' => true,
+            'color' => ['rgb' => 'FFFFFF'],
+        ],
+        'fill' => [
+            'fillType' => Fill::FILL_SOLID,
+            'startColor' => ['rgb' => '4A90E2'],
+        ],
+        'alignment' => [
+            'horizontal' => Alignment::HORIZONTAL_CENTER,
+            'vertical' => Alignment::VERTICAL_CENTER,
+        ],
         'borders' => [
             'allBorders' => [
                 'borderStyle' => Border::BORDER_THIN,
             ],
         ],
-    ]);
+    ];
+    $infoSheet->getStyle('A4:C4')->applyFromArray($headerStyle);
+
+    // Set lebar kolom
+    $infoSheet->getColumnDimension('A')->setWidth(15);
+    $infoSheet->getColumnDimension('B')->setWidth(30);
+    $infoSheet->getColumnDimension('C')->setWidth(35);
+
+    // Isi data kelas
+    $row = 5;
+    foreach ($kelas_list as $kelas) {
+        $infoSheet->setCellValue('A' . $row, $kelas['id']);
+        $infoSheet->setCellValue('B' . $row, $kelas['nama_kelas']);
+        $infoSheet->setCellValue('C' . $row, $kelas['wali_kelas']);
+        
+        // Style untuk baris data
+        $infoSheet->getStyle('A'.$row.':C'.$row)->applyFromArray([
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_LEFT,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                ],
+            ],
+        ]);
+        
+        // Highlight baris alternate
+        if ($row % 2 == 0) {
+            $infoSheet->getStyle('A'.$row.':C'.$row)->getFill()
+                ->setFillType(Fill::FILL_SOLID)
+                ->setStartColor(new \PhpOffice\PhpSpreadsheet\Style\Color('F5F5F5'));
+        }
+        
+        $row++;
+    }
+
+    // Tambahkan catatan penggunaan
+    $noteRow = $row + 1;
+    $infoSheet->setCellValue('A' . $noteRow, 'Catatan:');
+    $infoSheet->mergeCells('A'.$noteRow.':C'.$noteRow);
+    $infoSheet->getStyle('A'.$noteRow)->getFont()->setBold(true);
+
+    $notes = [
+        '1. Gunakan ID Kelas yang tertera di kolom "ID Kelas" untuk mengisi data siswa.',
+        '2. Pastikan ID Kelas yang digunakan sesuai dengan kelas yang dituju.',
+        '3. Jika ragu, tanyakan kepada admin sistem.',
+    ];
+
+    foreach ($notes as $index => $note) {
+        $noteRow++;
+        $infoSheet->setCellValue('A' . $noteRow, $note);
+        $infoSheet->mergeCells('A'.$noteRow.':C'.$noteRow);
+        $infoSheet->getStyle('A'.$noteRow)->getFont()->setItalic(true);
+    }
 
     // Kembali ke sheet pertama
     $spreadsheet->setActiveSheetIndex(0);
