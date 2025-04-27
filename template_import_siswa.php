@@ -1,0 +1,211 @@
+<?php
+session_start();
+
+// Cek apakah user sudah login
+if(!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+require_once 'config/koneksi.php';
+require_once __DIR__ . '/vendor/autoload.php';
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+
+try {
+    // Buat spreadsheet baru
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+
+    // Set judul worksheet
+    $sheet->setTitle('Template Import Siswa');
+
+    // Tambahkan petunjuk pengisian
+    $sheet->setCellValue('A1', 'PETUNJUK PENGISIAN:');
+    $sheet->mergeCells('A1:E1');
+    $sheet->setCellValue('A2', '1. Lihat ID Kelas di sheet "Informasi Kelas"');
+    $sheet->mergeCells('A2:E2');
+    $sheet->setCellValue('A3', '2. Jenis Kelamin diisi dengan "L" atau "P"');
+    $sheet->mergeCells('A3:E3');
+    $sheet->setCellValue('A4', '3. Pastikan NIS dan NISN bersifat unik (tidak boleh sama dengan data yang sudah ada)');
+    $sheet->mergeCells('A4:E4');
+    $sheet->setCellValue('A5', '4. Format NIS dan NISN harus berupa text (klik kanan pada sel -> Format Cells -> Text)');
+    $sheet->mergeCells('A5:E5');
+    
+    // Style untuk petunjuk
+    $petunjukStyle = [
+        'font' => [
+            'bold' => true,
+            'size' => 11,
+        ],
+        'fill' => [
+            'fillType' => Fill::FILL_SOLID,
+            'startColor' => ['rgb' => 'FFE699'],
+        ],
+    ];
+    $sheet->getStyle('A1:E5')->applyFromArray($petunjukStyle);
+    
+    // Set header kolom mulai dari baris 7
+    $headers = ['NIS', 'NISN', 'Nama Lengkap', 'Jenis Kelamin (L/P)', 'ID Kelas'];
+    
+    // Styling untuk header
+    $headerStyle = [
+        'font' => [
+            'bold' => true,
+            'color' => ['rgb' => 'FFFFFF'],
+        ],
+        'fill' => [
+            'fillType' => Fill::FILL_SOLID,
+            'startColor' => ['rgb' => '4A90E2'],
+        ],
+        'alignment' => [
+            'horizontal' => Alignment::HORIZONTAL_CENTER,
+            'vertical' => Alignment::VERTICAL_CENTER,
+        ],
+        'borders' => [
+            'allBorders' => [
+                'borderStyle' => Border::BORDER_THIN,
+            ],
+        ],
+    ];
+
+    // Tulis header dan terapkan style
+    foreach (range('A', 'E') as $index => $column) {
+        $sheet->setCellValue($column . '7', $headers[$index]);
+        $sheet->getColumnDimension($column)->setAutoSize(true);
+    }
+    $sheet->getStyle('A7:E7')->applyFromArray($headerStyle);
+
+    // Tambahkan contoh data
+    $contohData = [
+        ['00012023', '3169255540', 'Ahmad Setiawan', 'L', '1'],
+        ['00022023', '3169255541', 'Siti Nurhaliza', 'P', '1'],
+        ['00032023', '3169255542', 'Budi Santoso', 'L', '2']
+    ];
+
+    $row = 8;
+    foreach ($contohData as $data) {
+        $col = 'A';
+        foreach ($data as $value) {
+            $sheet->setCellValue($col . $row, $value);
+            // Set format text untuk kolom NIS dan NISN
+            if ($col == 'A' || $col == 'B') {
+                $sheet->getStyle($col . $row)->getNumberFormat()->setFormatCode('@');
+            }
+            $col++;
+        }
+        $row++;
+    }
+
+    // Style untuk contoh data
+    $contohStyle = [
+        'fill' => [
+            'fillType' => Fill::FILL_SOLID,
+            'startColor' => ['rgb' => 'E8F5E9'],
+        ],
+        'borders' => [
+            'allBorders' => [
+                'borderStyle' => Border::BORDER_THIN,
+            ],
+        ],
+    ];
+    $sheet->getStyle('A8:E10')->applyFromArray($contohStyle);
+
+    // Tambahkan catatan contoh
+    $sheet->setCellValue('A11', 'Catatan: Data di atas hanya contoh. Hapus atau timpa dengan data yang sebenarnya.');
+    $sheet->mergeCells('A11:E11');
+    $sheet->getStyle('A11')->getFont()->setItalic(true);
+    $sheet->getStyle('A11')->getFont()->setSize(10);
+    $sheet->getStyle('A11')->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('808080'));
+
+    // Tambahkan validasi untuk kolom Jenis Kelamin
+    $validation = $sheet->getCell('D8')->getDataValidation();
+    $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+    $validation->setFormula1('"L,P"');
+    $validation->setAllowBlank(false);
+    $validation->setShowDropDown(true);
+    $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+    $validation->setErrorTitle('Input Error');
+    $validation->setError('Pilih "L" untuk Laki-laki atau "P" untuk Perempuan');
+
+    // Copy validasi ke 100 baris ke bawah
+    for ($i = 9; $i <= 100; $i++) {
+        $validation = $sheet->getCell('D' . $i)->getDataValidation();
+        $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+        $validation->setFormula1('"L,P"');
+        $validation->setAllowBlank(false);
+        $validation->setShowDropDown(true);
+    }
+
+    // Ambil daftar kelas untuk informasi
+    $stmt = $pdo->query("SELECT id, nama_kelas FROM kelas ORDER BY nama_kelas");
+    $kelas_list = $stmt->fetchAll();
+
+    // Tambahkan sheet informasi kelas
+    $infoSheet = $spreadsheet->createSheet();
+    $infoSheet->setTitle('Informasi Kelas');
+    
+    // Tambahkan judul di sheet informasi
+    $infoSheet->setCellValue('A1', 'DAFTAR ID KELAS');
+    $infoSheet->mergeCells('A1:B1');
+    $infoSheet->getStyle('A1:B1')->applyFromArray([
+        'font' => ['bold' => true, 'size' => 14],
+        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+    ]);
+    
+    // Header untuk informasi kelas
+    $infoSheet->setCellValue('A2', 'ID Kelas');
+    $infoSheet->setCellValue('B2', 'Nama Kelas');
+
+    // Style untuk header informasi
+    $infoSheet->getStyle('A2:B2')->applyFromArray($headerStyle);
+    $infoSheet->getColumnDimension('A')->setAutoSize(true);
+    $infoSheet->getColumnDimension('B')->setAutoSize(true);
+
+    // Isi data kelas
+    $row = 3;
+    foreach ($kelas_list as $kelas) {
+        $infoSheet->setCellValue('A' . $row, $kelas['id']);
+        $infoSheet->setCellValue('B' . $row, $kelas['nama_kelas']);
+        $row++;
+    }
+
+    // Style untuk data kelas
+    $infoSheet->getStyle('A3:B' . ($row-1))->applyFromArray([
+        'borders' => [
+            'allBorders' => [
+                'borderStyle' => Border::BORDER_THIN,
+            ],
+        ],
+    ]);
+
+    // Kembali ke sheet pertama
+    $spreadsheet->setActiveSheetIndex(0);
+
+    // Bersihkan output buffer
+    if (ob_get_length()) ob_clean();
+    
+    // Set header untuk download
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="Template_Import_Siswa.xlsx"');
+    header('Cache-Control: max-age=0');
+    header('Cache-Control: max-age=1');
+    header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+    header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+    header('Cache-Control: cache, must-revalidate');
+    header('Pragma: public');
+
+    // Simpan file
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
+    exit;
+} catch (Exception $e) {
+    // Tampilkan error
+    echo "Terjadi kesalahan: " . $e->getMessage();
+    exit;
+}
+?> 
