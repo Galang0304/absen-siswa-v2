@@ -110,7 +110,7 @@ if(!isset($_SESSION['user_id']) && $current_page != 'login.php') {
 
 <!-- Mobile Bottom Navigation -->
 <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-50">
-    <div class="grid grid-cols-4 h-16">
+    <div class="grid grid-cols-3 gap-x-4 justify-items-center max-w-sm mx-auto h-16">
         <a href="dashboard.php" 
            class="flex flex-col items-center justify-center <?= $current_page == 'dashboard.php' ? 'text-orange-600' : 'text-gray-600' ?>">
             <i class="fas fa-home text-xl"></i>
