@@ -6,6 +6,7 @@ require_once 'partials/header.php';
 // Set filter default
 $tanggal = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
 $kelas_id = isset($_GET['kelas_id']) ? $_GET['kelas_id'] : '';
+$search = isset($_GET['search']) ? $_GET['search'] : '';
 
 // Ambil daftar kelas untuk filter
 $stmt = $pdo->query("SELECT id, nama_kelas FROM kelas ORDER BY nama_kelas");
@@ -33,6 +34,12 @@ $params = [$tanggal];
 if (!empty($kelas_id)) {
     $query .= " AND s.kelas_id = ?";
     $params[] = $kelas_id;
+}
+
+if (!empty($search)) {
+    $query .= " AND (s.nama LIKE ? OR s.nis LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
 }
 
 $query .= " ORDER BY k.nama_kelas, s.nama";
@@ -76,7 +83,7 @@ foreach ($siswa_list as $siswa) {
 
             <!-- Filter -->
             <div class="bg-white rounded-lg shadow-sm mb-6 p-6">
-                <form method="GET" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <form method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Kelas</label>
                         <select name="kelas_id" class="w-full rounded-lg border-gray-300 focus:ring-orange-500 focus:border-orange-500" onchange="this.form.submit()">
@@ -93,6 +100,18 @@ foreach ($siswa_list as $siswa) {
                         <input type="date" name="tanggal" value="<?= htmlspecialchars($tanggal) ?>" 
                                class="w-full rounded-lg border-gray-300 focus:ring-orange-500 focus:border-orange-500"
                                onchange="this.form.submit()">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Cari Siswa</label>
+                        <div class="relative">
+                            <input type="text" name="search" value="<?= htmlspecialchars($search) ?>"
+                                   placeholder="Cari nama atau NIS..."
+                                   class="w-full rounded-lg border-gray-300 focus:ring-orange-500 focus:border-orange-500 pl-10"
+                                   onchange="this.form.submit()">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
