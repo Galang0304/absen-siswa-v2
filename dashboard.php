@@ -63,7 +63,7 @@ $total_summary = $stmt->fetch();
 
 <!-- Main Content -->
 <div class="md:pl-64">
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-4 py-8 pb-24">
         <!-- Header dengan Filter Tanggal -->
         <div class="bg-white rounded-lg shadow-sm mb-6">
             <div class="flex flex-col p-4">
@@ -268,6 +268,11 @@ $total_summary = $stmt->fetch();
         display: block;
         width: 100%;
         overflow-x: auto;
+    }
+
+    /* Tambah margin bottom untuk konten terakhir */
+    .container {
+        margin-bottom: 5rem;
     }
 
     /* Animasi untuk panduan scroll */
