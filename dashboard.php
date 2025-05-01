@@ -83,11 +83,6 @@ $total_summary = $stmt->fetch();
                                    onchange="window.location.href='?tanggal=' + this.value">
                         </div>
                     </div>
-                    <a href="export_absensi.php?tanggal=<?= htmlspecialchars($tanggal) ?>" 
-                       class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition duration-150 ease-in-out">
-                        <i class="fas fa-file-excel mr-2"></i>
-                        Export Excel
-                    </a>
                 </div>
             </div>
         </div>
