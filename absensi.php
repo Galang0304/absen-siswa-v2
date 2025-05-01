@@ -113,7 +113,7 @@ if(isset($_GET['kelas_id']) && !empty($_GET['kelas_id'])) {
 
         <?php if(!empty($siswa_list)): ?>
         <!-- Form Absensi -->
-        <form method="POST" class="bg-white rounded-lg shadow-md overflow-hidden">
+        <form method="POST" class="bg-white rounded-lg shadow-md overflow-hidden pb-20 md:pb-0">
             <input type="hidden" name="action" value="tambah">
             <input type="hidden" name="kelas_id" value="<?= htmlspecialchars($_GET['kelas_id']) ?>">
             <input type="hidden" name="tanggal" value="<?= isset($_GET['tanggal']) ? htmlspecialchars($_GET['tanggal']) : date('Y-m-d') ?>">
@@ -181,8 +181,16 @@ if(isset($_GET['kelas_id']) && !empty($_GET['kelas_id'])) {
                 </table>
             </div>
             
-            <div class="px-6 py-4 bg-gray-50 text-right">
+            <!-- Desktop Submit Button -->
+            <div class="hidden md:block px-6 py-4 bg-gray-50 text-right">
                 <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+                    <i class="fas fa-save mr-2"></i>Simpan Absensi
+                </button>
+            </div>
+
+            <!-- Mobile Fixed Submit Button -->
+            <div class="md:hidden fixed bottom-16 inset-x-0 p-4 bg-white border-t border-gray-200 shadow-lg z-50">
+                <button type="submit" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center text-lg font-medium">
                     <i class="fas fa-save mr-2"></i>Simpan Absensi
                 </button>
             </div>
@@ -194,5 +202,24 @@ if(isset($_GET['kelas_id']) && !empty($_GET['kelas_id'])) {
         <?php endif; ?>
     </div>
 </div>
+
+<style>
+@media (max-width: 768px) {
+    /* Tambah padding bottom pada form untuk ruang tombol fixed */
+    .table-responsive {
+        margin-bottom: 4rem;
+    }
+
+    /* Style untuk tombol fixed */
+    .fixed.bottom-16 {
+        box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Animasi hover untuk tombol */
+    .fixed.bottom-16 button:active {
+        transform: scale(0.98);
+    }
+}
+</style>
 
 <?php require_once 'partials/footer.php'; ?> 
